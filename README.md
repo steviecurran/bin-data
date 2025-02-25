@@ -1,4 +1,4 @@
-# Plot of binned data
+# Bin data and plot
 
 Will bin the data either by equally spaced bins or by an equal number of datapoints in each bin (quantile binning). 
 
