@@ -18,8 +18,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 infile = "HI_fit_1-597_uv_bottom=14.80.csv"; uv = 14.8
 df = pd.read_csv(infile); print(df.describe())
 
-#df = df[df['Q'] < 60]
-
 def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE_SD): 
     def binning(ax):
         arr = []
@@ -84,8 +82,7 @@ def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE
         else:
             ax.errorbar(x, y, xerr=dx, yerr=dy, fmt='.', c = 'k', capsize=2,zorder = 2)
             newx1 = x1 - dx[0]; newx2 = x2 + dx[0]/inc # SPACE FOR ERROR BARS
-        return newx1,newx2
-      
+        return newx1,newx2   
     ################ FAKE LOG SCALES ################ 
     def fake_log (ax,xax,yax,xstart,xend,ystart,yend):
         def update_ticks(z, pos):
