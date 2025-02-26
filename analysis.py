@@ -18,18 +18,18 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 infile = "HI_fit_1-597_uv_bottom=14.80.csv"; uv = 14.8
 df = pd.read_csv(infile); print(df.describe())
 
-def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE_SD): 
-    def binning(ax):
+def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE_SD): #
+   def binning(ax):
         arr = []
         dfb = pd.DataFrame()
-        censor = 0 # IF WORKING WITH LIMITS 
+        censor = 0 # IF WORKING WITH LIMITS -
         dfb['X'] = data[para1]; dfb['Y'] = data[para2]; dfb['censor'] = censor
         dfb = dfb[['censor','X','Y']].reset_index(); del dfb['index']
         #print(dfb)
         bins = int((x2-x1)*inc); start = int(x1)
         binned = []
         df_bin = pd.DataFrame()
-        if equal == 'S':  # EQUAL SPREAD 
+        if equal == 'U':  # EQUAL SPREAD  (UNIFORM BINNING)
             for i in range (0,bins+1): 
                 s = start + float(i)/inc
                 e = start + float(i+1)/inc
@@ -47,25 +47,33 @@ def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE
                 arr.append(values)
                 dfi = pd.DataFrame(arr, columns=['n','x_mean','dx','y_mean','dy','xmin','xmax'])
                
-        else:  # EQUAL NUMBER/BIN (QUANTILE)
+        else:  # EQUAL NUMBER/BIN (QUANTILE BINNING)
+              
+            dfb = dfb.sort_values('X'); dfb = dfb.reset_index();
+            dfb.index += 1 # ADDING ANY STRAYS TO THE TOP BIN 
+                       
             dbs = int(len(dfb)/nbins)
             print("%d bins over %d entries - %d per bin with remainder %s"
-                  %(bins,len(dfb), dbs, len(dfb) - (nbins*dbs)))
+                  %(nbins,len(dfb), dbs, len(dfb) - (nbins*dbs)))
             dfb = dfb.sort_values('X');
-            dfb = dfb.reset_index(); dfb.index += 1;
+            dfb = dfb.reset_index(); del dfb['index']; del dfb['level_0']
+            dfb.index += 1;
+            tmp2 = dfb[dfb.index > nbins*dbs]
             
             for i in range(0,nbins):
                 start = i*(dbs)+1; end = (i+1)*(dbs)
-                tmp = dfb.loc[start:end:1]; #print(tmp)
+                tmp = dfb.loc[start:end:1];
+                if i == nbins-1:
+                    tmp = tmp.append(tmp2) # ADDING ANY STRAYS TO THE TOP BIN 
+                #print(tmp,len(tmp))
                 x_mean = np.mean(tmp['X']); dx = np.std(tmp['X'],ddof=1)
                 y_mean = np.mean(tmp['Y']); dy = np.std(tmp['Y'],ddof=1)
-                xmax = max(tmp['X']); xmin = min(tmp['X'])
-                n = len(tmp)
+                xmax = max(tmp['X']); xmin = min(tmp['X']); n = len(tmp)
                 values = [n,x_mean,dx,y_mean,dy,xmin,xmax]
                 arr.append(values)
                 dfi = pd.DataFrame(arr, columns=['n','x_mean','dx','y_mean','dy','xmin','xmax'])
-
-        df_bin = df_bin.append(dfi); #print(df_bin)
+                                
+        df_bin = df_bin.append(dfi); print(df_bin)
         
         df_bin = df_bin[df_bin['n'] > 0]
         x = df_bin['x_mean']; dx = df_bin['dx']; y = df_bin['y_mean'];
@@ -76,13 +84,14 @@ def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE
         else:
             dy = df_bin['dy']/(df_bin['n']**0.5)
 
-        if equal == "N":
+        if equal == "Q":
             ax.errorbar(x, y, xerr=(left,right), yerr=dy, fmt='.', c = 'k', capsize=2,zorder = 2)
             newx1 = x1; newx2 = x2
-        else:
+        else: # NUMBER SAME IN EACH BIN, SHOWING RANGE +/-1 SIGMA/SD 
             ax.errorbar(x, y, xerr=dx, yerr=dy, fmt='.', c = 'k', capsize=2,zorder = 2)
             newx1 = x1 - dx[0]; newx2 = x2 + dx[0]/inc # SPACE FOR ERROR BARS
-        return newx1,newx2   
+        return newx1,newx2
+      
     ################ FAKE LOG SCALES ################ 
     def fake_log (ax,xax,yax,xstart,xend,ystart,yend):
         def update_ticks(z, pos):
@@ -190,10 +199,11 @@ def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE
     plt.savefig(outfile); print('Written to %s' %(outfile))
     plt.show()
       
-Q_plot(df,'Q','TOssd',19,r'Turnover frequency, $\nu_{\rm TO}$ [Hz]',r'$\nu_{\rm TO}$ binned','log',0.5,'S',10,'nolim','SE')
-#Q_plot(df,'Q','thick',19, r'Spectral index, $\alpha_{\rm thick}$',r'$\alpha_{\rm thick}$ binned','nolog',0.5,'S',10,'nolim','SE')
-# equal = S       EQUALLY SPACED 
-# equal = N       NUMBER SAME IN EACH BIN, SHOWING RANGE OF BINNING
-# equal = NS      NUMBER SAME IN EACH BIN, SHOWING +/-1 SIGMA IN X 
+Q_plot(df,'Q','TOssd',19,r'Turnover frequency, $\nu_{\rm TO}$ [Hz]',r'$\nu_{\rm TO}$ binned','log',0.5,'Q',9,'nolim','SE')
+#Q_plot(df,'Q','thick',19, r'Spectral index, $\alpha_{\rm thick}$',r'$\alpha_{\rm thick}$ binned','nolog',0.5,'Q',10,'nolim','SE')
+# equal = U       UNIFORM - EQUALLY SPACED  
+# equal = Q       QUANTILE - NUMBER SAME IN EACH BIN, SHOWING RANGE OF BINNING
+# equal = QS      QUANTILE - NUMBER SAME IN EACH BIN, SHOWING RANGE +/-1 SIGMA/SD 
 
 
+# CHECK FOR STRAYS
