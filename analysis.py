@@ -17,9 +17,8 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 infile = "HI_fit_1-597_uv_bottom=14.80.csv"; uv = 14.8
 df = pd.read_csv(infile); print(df.describe())
-
-def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE_SD): #
-   def binning(ax):
+def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE_SD): 
+    def binning(ax):
         arr = []
         dfb = pd.DataFrame()
         censor = 0 # IF WORKING WITH LIMITS -
@@ -87,9 +86,13 @@ def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE
         if equal == "Q":
             ax.errorbar(x, y, xerr=(left,right), yerr=dy, fmt='.', c = 'k', capsize=2,zorder = 2)
             newx1 = x1; newx2 = x2
+
         else: # NUMBER SAME IN EACH BIN, SHOWING RANGE +/-1 SIGMA/SD 
             ax.errorbar(x, y, xerr=dx, yerr=dy, fmt='.', c = 'k', capsize=2,zorder = 2)
-            newx1 = x1 - dx[0]; newx2 = x2 + dx[0]/inc # SPACE FOR ERROR BARS
+            if equal == "S":
+                newx1 = x1 - dx[0]; newx2 = x2 + dx[0]/inc # SPACE FOR ERROR BARS
+            else:
+                newx1 = x1; newx2 = x2
         return newx1,newx2
       
     ################ FAKE LOG SCALES ################ 
@@ -204,6 +207,3 @@ Q_plot(df,'Q','TOssd',19,r'Turnover frequency, $\nu_{\rm TO}$ [Hz]',r'$\nu_{\rm 
 # equal = U       UNIFORM - EQUALLY SPACED  
 # equal = Q       QUANTILE - NUMBER SAME IN EACH BIN, SHOWING RANGE OF BINNING
 # equal = QS      QUANTILE - NUMBER SAME IN EACH BIN, SHOWING RANGE +/-1 SIGMA/SD 
-
-
-# CHECK FOR STRAYS
