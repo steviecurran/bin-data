@@ -15,13 +15,25 @@ pd.set_option('display.max_columns', None)
 pd.options.mode.chained_assignment = None  # default='warn'
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+#infile = "~/papers/106/HI_z-gt-0.1.dat_trun-uv_bottom=15.3.dat"; uv = 15.3 ONLY 90 HAVE Q
+#infile = "~/papers/106/HI_z-gt-0.1.dat_trun-uv_bottom=15.1.dat"; uv = 15.1 # cur24 - 134 WITH Q
+# cur24 SAYS 
+#infile = "~/papers/106/HI_z-gt-0.1.dat_trun-uv_bottom=15.1.dat+new"; uv = 15.1 #UP TO 179
+
+#infile = "HI_fit_1-597_uv_bottom=15.30.csv"; uv = 15.3 # NO GOOD
+#infile = "HI_fit_1-597_uv_bottom=15.10.csv"; uv = 15.1
 infile = "HI_fit_1-597_uv_bottom=14.80.csv"; uv = 14.8
 df = pd.read_csv(infile); print(df.describe())
-def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE_SD): 
+
+#df = df[df['Q'] < 60]
+
+def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE_SD): # FROM INC IS FOR BINNING
+
+    #### EQUAL BINNING - in here so only have to feed one parameter ######
     def binning(ax):
         arr = []
         dfb = pd.DataFrame()
-        censor = 0 # IF WORKING WITH LIMITS -
+        censor = 0 # IF WORKING WITH LIMITS - SEE students/Valentina/cur19.py
         dfb['X'] = data[para1]; dfb['Y'] = data[para2]; dfb['censor'] = censor
         dfb = dfb[['censor','X','Y']].reset_index(); del dfb['index']
         #print(dfb)
@@ -63,7 +75,7 @@ def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE
                 start = i*(dbs)+1; end = (i+1)*(dbs)
                 tmp = dfb.loc[start:end:1];
                 if i == nbins-1:
-                    tmp = tmp.append(tmp2) # ADDING ANY STRAYS TO THE TOP BIN 
+                    tmp = pd.concat([tmp,tmp2], ignore_index=True)
                 #print(tmp,len(tmp))
                 x_mean = np.mean(tmp['X']); dx = np.std(tmp['X'],ddof=1)
                 y_mean = np.mean(tmp['Y']); dy = np.std(tmp['Y'],ddof=1)
@@ -72,7 +84,7 @@ def Q_plot(data,para1,para2,N_limit,ylabel,ylabel2,log,inc,equal,nbins,limits,SE
                 arr.append(values)
                 dfi = pd.DataFrame(arr, columns=['n','x_mean','dx','y_mean','dy','xmin','xmax'])
                                 
-        df_bin = df_bin.append(dfi); print(df_bin)
+        df_bin = pd.concat([df_bin,dfi], ignore_index=True)
         
         df_bin = df_bin[df_bin['n'] > 0]
         x = df_bin['x_mean']; dx = df_bin['dx']; y = df_bin['y_mean'];
